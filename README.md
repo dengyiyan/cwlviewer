@@ -45,7 +45,7 @@ If you change the source code, then use this `docker-compose.override.yml` and
 re-build with `docker-compose build`:
 
 ```yaml
-version: '3.2'
+version: '3.9'
 services:
   spring:
     build: .
@@ -62,7 +62,7 @@ If you have modified the source code, then you may want to build the docker imag
 Create `docker-compose.override.yml`:
 
 ```
-version: '3.2'
+version: '3.9'
 services:
   postgres:
     ports:
@@ -113,6 +113,21 @@ system properties like `-Dspring.datasource.url=jdbc:postgresql://localhost:5432
 You will also need to have a SPARQL server such as [Apache Jena Fuseki](https://jena.apache.org/documentation/fuseki2/) running,
 by default on `localhost:3030`
 
+#### Ruby and Licensee
+
+To retrieve license information, CWL Viewer uses the [Licensee](https://github.com/licensee/licensee) Ruby Gem. To install it,
+[configure Ruby](https://www.ruby-lang.org/en/documentation/installation/) on your environment and then run
+
+```bash
+gem install licensee
+```
+
+You may use a dependency from your operating system package manager if you
+prefer too, e.g. `ruby-licensee` for Ubuntu LTS 22.04.1.
+
+Before running Maven, try running `licensee` in the command-line to verify
+it was installed successfully.
+
 ## Compiling and Running
 
 To compile you will need [Java 17](https://www.oracle.com/java/technologies/downloads/) or a compatible distribution
@@ -156,7 +171,7 @@ There are a variety of configuration options detailed in the [application config
 When deploying with docker, these can be overridden externally by creating/modifying `docker-compose.override.yml` as follows:
 
 ```yaml
-version: '3.2'
+version: '3.9'
 services:
   spring:
     environment:

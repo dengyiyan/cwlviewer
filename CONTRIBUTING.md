@@ -75,11 +75,20 @@ application built with [Spring Boot](https://projects.spring.io/spring-boot/).
 Packaging is done by feature and all Spring configuration is 
 Java annotation based.
 
+The code is auto-formatted using [fmt-maven-plugin](https://github.com/spotify/fmt-maven-plugin)
+using [google-java-format](https://github.com/google/google-java-format)
+which follows [Google's code styleguide](https://google.github.io/styleguide/javaguide.html).
+
+You can run `mvn process-sources` to manually format the code.
+
 Templates for the view use [Thymeleaf](http://www.thymeleaf.org/), 
 which allows them to be displayed in browsers as static prototypes.
 
 PostgreSQL is used to store information about `Workflow` and `QueuedWorkflow` 
 objects using [Spring Data JPA](https://docs.spring.io/spring-data/jpa/docs/current/reference/html/).
+
+The [Licensee](https://github.com/licensee/licensee) Ruby Gem is used to automatically infer license information from
+Git repositories.
 
 The application also uses a triple store to keep the RDF representing 
 workflows (gathered from [cwltool](https://github.com/common-workflow-language/cwltool)'s 

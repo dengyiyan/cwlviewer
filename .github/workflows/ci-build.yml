@@ -32,6 +32,14 @@ jobs:
           distribution: 'adopt'
           java-version: '17'
 
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.1'
+
+      - name: Install Licensee
+        run: gem install licensee
+
       - name: Install system packages
         run: |
           sudo apt-get -qq update
@@ -45,7 +53,7 @@ jobs:
       - name: Coverage report
         run: |
           mvn prepare-package -DskipTests=true
-          mvn jacoco:report coveralls:report --no-transfer-progress -DrepoToken=$COVERALLS_SECRET -DpullRequest=${{ github.event.number }}
+          mvn --errors jacoco:report coveralls:report --no-transfer-progress -DrepoToken=$COVERALLS_SECRET -DpullRequest=${{ github.event.number }}
         env:
           CI_NAME: github
           COVERALLS_SECRET: ${{ secrets.GITHUB_TOKEN }}

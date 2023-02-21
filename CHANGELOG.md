@@ -1,7 +1,53 @@
 
 # Changelog 
 
-## v1.4.6 [Unreleased]
+## v1.4.7 [2023-01-31]
+
+User visible changes
+- The extensions to CWL that `cwltool` knows about will no longer results in an error
+
+Operations changes:
+- After we run `cwltool`, we now try harder to cleanup the process.
+
+Dependecies upgrade:
+- Bump jackson-core from 2.14.1 to 2.14.2
+- Bump mockito-inline from 5.0.0 to 5.1.1
+
+## v1.4.6 [2023-01-18]
+
+User visible changes
+- Better identify repository licenses through the Licensee Ruby Gem
+- When processing a directory, the presence of errors will cause a afile to be skipped
+  instead of erroring out the entire process
+- Many user visible error message have been made more helpful; especially in the case
+  of a missing or private repository
+
+Operations changes:
+- Unused RO Bundles and Git repositories are now deleted in case of errors,
+  instead of filling up the disk with unusable files
+- Temporary directories older than 1 day are now cleared via a daily cron job
+  See `src/main/resources/application.properties` for configuration
+- Error handling and retries are improved for git checkouts
+
+Minor changes:
+- mockito-all was replaced by mockito-inline as it supports mocking static
+  methods
+
+Dependecies upgrade:
+- Bump jackson from 2.13.4 to 2.14.1
+- Bump spring-data-commons from 2.7.3 to 2.7.7
+- Bump hibernate-types-55 from 2.19.2 to 2.21.1
+- Bump liquibase-core from 4.16.1 to 4.19.0
+- Bump snakeyaml-engine from 2.4 to 2.6 
+- Bump common-compress from 1.21 to 1.22
+- Bump junit-jupiter from 1.17.4 to 1.17.6
+- Bump postgresql from 1.17.4 to 1.17.6
+- Bump jena-core from 4.6.1 to 4.7.0
+
+Changes related to the migration of view.commonwl.org from Curii, Inc to HPC4AI, University of Turin:
+- Removed Data controller section in the About page
+- Added HPC4AI logo in the page footer
+- Updated docker-compose.yml file to explicitly set `ulimit -n` to `65536`
 
 ## v1.4.5 [2022-09-30]
 
