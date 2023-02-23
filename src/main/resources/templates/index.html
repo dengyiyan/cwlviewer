@@ -66,11 +66,10 @@
         <div class="container">
             <div class="row">
                 <div class="col-md-12" role="main" id="main">
-                    <h1>Common Workflow Language Viewer</h1>
-                    <p>This tool visualises and lists the details of a
-                        <a href="http://www.commonwl.org/" rel="noopener" target="_blank">CWL workflow</a>
-                        with its inputs, outputs and steps and
-                        packages the files involved into a downloadable
+                    <h1>CWL Viewer for Phenoflow</h1>
+                    <p>This tool visualises and lists the details of a definition of disease defined in 
+                        <a href="http://www.commonwl.org/" rel="noopener" target="_blank">CWL workflow</a> format,
+                        with its inputs, outputs and steps and packages the files involved into a downloadable
                         <a href="https://researchobject.github.io/specifications/bundle/" rel="noopener" target="_blank">
                             Research Object Bundle</a>
                         (zip file with metadata in a manifest), allowing it to be easily viewed and shared.</p>
@@ -80,7 +79,7 @@
 
                     <hr/>
 
-                    <h2>Workflow URL</h2>
+                    <h2>Type of disease</h2>
                     <!-- <p>Provide a github.com, gitlab.com or Git repository link to the workflow (or directory of workflows) here</p>
                     <div class="alert alert-grey">
                         <strong>Don't know what to view?</strong> Try these from <i>common-workflow-language/workflows</i>:
@@ -100,7 +99,7 @@
                         </div>
                         <div id="urlGroup" class="form-group">
                             <select class="form-select form-control" id="url" name="url" th:field="*{url}" th:value="${formURL}" aria-label="Default select example" onchange="load_branch()">
-                                <option value="">--Select an URL--</option>
+                                <option value="">--Select a disease definition--</option>
                             </select>
                             <!-- <label class="control-label" for="url">URL to workflow</label>
                             <input type="text" class="form-control" placeholder="github.com, gitlab.com or Git repository URL" id="url" name="url" th:field="*{url}" th:value="${formURL}" />
@@ -108,7 +107,7 @@
                         </div>
                         <div id="extraInputs" class="row">
                             <div class="col-md-6 form-group">
-                                <label class="control-label" for="branch">Branch Name/Commit ID</label>
+                                <label class="control-label" for="branch">Branch Name</label>
                                 <select class="form-select form-control" name="branch" id="branch" aria-label="Default select example" onchange="select_path()">
                                 </select>
                                 <span class="help-block"></span>
@@ -119,7 +118,7 @@
                                 <span class="help-block"></span>
                             </div>
                         </div>
-                        <button class="btn btn-primary pull-right" type="submit" id="parse">Parse Workflow</button>
+                        <button class="btn btn-primary pull-right" type="submit" id="parse">View Workflow</button>
                     </form>
                 </div>
             </div>
@@ -128,7 +127,6 @@
         <div th:replace="fragments/footer :: copy"></div>
 
         <script src="/bower_components/requirejs/require.js" data-main="/js/main.js"></script>
-        <script src="/bower_components/urls.json"></script>
         <script>
             var url_selection = document.getElementById('url');
             var branch_selection = document.getElementById('branch');
@@ -138,7 +136,11 @@
 
             function load_urls(){
                 for(var i=0;i<URLs.length;++i){
-                    var option = '<option value="'+ URLs[i]+'">'+URLs[i]+'</option>';
+                    var url = URLs[i];
+                    var array = url.split("/");
+                    var temp = array[array.length-1];
+                    var name = temp.substring(0, temp.length-4);
+                    var option = '<option value="'+ URLs[i]+'">'+ name +'</option>';
                     url_selection.innerHTML += option;
                 }
             }

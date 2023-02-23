@@ -124,10 +124,42 @@ digraph G {
 <div class="container" role="main" id="main">
     <div class="row">
         <div class="col-md-12" >
-            <h2>Workflow: <span th:text="${workflow.label}">Workflow Name</span></h2>
+            <h2>Disease: <span id="name"></span></h2>
+            <!-- <div class="graph-menu hidden-print pull-right" id="graph-menu">
+                <label>Switch branch</label>
+                <form id="add" action="#" th:action="@{/workflows}" th:object="${workflowForm}" method="POST">
+                    <select class="form-select form-control" name="branch" id="branch" aria-label="Default select example" onchange="select_path()">
+                    </select>
+                    <label class="control-label" for="path">Main cwl file</label>
+                    <input type="text" class="form-control" name="path" id="path" readonly/>
+                    <button class="btn btn-primary pull-right" type="submit" id="parse">Switch</button>
+                </form>
+            </div> -->
+            <div style = 'border:1px solid black; border-radius: 15px;padding: 5px;padding-bottom: 50px;'>
+                <h4>Switch to another branch</h4>
+                <form id="add" action="#" th:action="@{/workflows}" th:object="${workflowForm}" method="POST">
+                    <div hidden class="form-group">
+                        <input readonly class="form-select form-control" id="url" name="url">
+                        </input>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 form-group">
+                            <label class="control-label" for="branch">Branch selection</label>
+                            <select class="form-select form-control" name="branch" id="branch" aria-label="Default select example" onchange="select_path()">
+                            </select>
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label class="control-label" for="path">Main CWL file</label>
+                            <input type="text" class="form-control" name="path" id="path" readonly/>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary pull-right" type="submit" id="parse">Switch</button>
+                </form>
+            </div>
         </div>
+        <br>
         <div class="col-md-6">
-            <a th:href="@{${workflow.retrievedFrom.getUrl()}}" href="#" rel="noopener" target="_blank" style="text-decoration:none;">
+            <a th:href="@{${workflow.retrievedFrom.getUrl()}}" href="#" rel="noopener" target="_blank" style="text-decoration:none;" id="x">
                 <img th:if="${workflow.retrievedFrom.getType().name() == 'GITHUB'}" id="gitLogo" src="../static/img/GitHub-Mark-32px.png" th:src="@{/img/GitHub-Mark-32px.png}" width="24" height="24" />
                 <img th:unless="${workflow.retrievedFrom.getType().name() == 'GITHUB'}" id="gitLogo" src="../static/img/gitlogo.png" th:src="@{/img/gitlogo.png}" width="30" height="30" />
             </a>
@@ -324,5 +356,134 @@ digraph G {
 <div th:replace="fragments/footer :: copy"></div>
 
 <script src="/bower_components/requirejs/require.js" data-main="/js/workflow.js"></script>
+<script>
+    var a = document.getElementById("x");
+    var disease = document.getElementById("name");
+    var disease_selection = document.getElementById("url");
+    var branch_selection = document.getElementById("branch");
+    var url = a.href;
+    var array = url.split("/");
+    var path = array[array.length-1];
+    var main_path = document.getElementById('path');
+    var branch = array[array.length-2];
+    var repo = array[array.length-4];
+    var button = document.getElementById("parse");
+
+    var query = 'https://api.github.com/repos/phenoflow/' + repo + '/branches';
+
+    disease_selection.value = url;
+    function load_branch(){
+        var branches = [];
+        let xhttp = new XMLHttpRequest();
+        xhttp.open('GET', query, true);
+        xhttp.onreadystatechange = function() {
+            if (this.readyState == 4 && this.status == 200) {
+                var all = JSON.parse(this.response);
+                if (all.length > 1){
+                    all.forEach(element => {
+                        branches.push(element['name']);
+                    });
+                }
+                else {
+                    branches.push(all[0]['name']);
+                }
+                for(var i=0;i<branches.length;++i){
+                    var option = '';
+                    if (branches[i] == branch){
+                        option = '<option value="'+ branches[i]+'" selected>'+branches[i]+'</option>';
+                    }
+                    else{
+                        option = '<option value="'+ branches[i]+'">'+branches[i]+'</option>';
+                    }
+                    branch_selection.innerHTML += option;
+                }
+                
+            }
+            select_path();
+        }
+        xhttp.send();
+    }
+
+    function startWithUpper(c){
+                if (c.charAt(0) == c.charAt(0).toUpperCase()){
+                    return true;
+                }
+                return false;
+            }
+
+    function isMainCWL(s){
+        if (startWithUpper(s) && s.endsWith('.cwl') && !s.includes('inputs')){
+            return true;
+        }
+        return false;
+    }
+
+    function select_path(){
+        if (branch_selection.value != ''){
+            main_path.innerHTML = '';
+            var quest = 'https://api.github.com/repos/phenoflow/' + repo + '/git/trees/' + branch_selection.value;
+            var file;
+            let xhttp = new XMLHttpRequest();
+            xhttp.open('GET', quest, true);
+            xhttp.onreadystatechange = function() {
+                if (this.readyState == 4 && this.status == 200) 
+                {
+                    if (branch_selection.value == branch){
+                        button.disabled = true;
+                        button.innerHTML = 'Current branch';
+                    }
+                    else{
+                        var a = JSON.parse(this.response);
+                        // console.log(a['tree'])
+                        if (a['tree'].length < 1){
+                            main_path.value = 'Empty branch';
+                            button.disabled = true;
+                        }
+                        else if (a['tree'].length == 1){
+                            if (isMainCWL(a['tree'][0]['path'])){
+                                main_path.value = a['tree'][0]['path'];
+                                button.disabled = false;
+                                button.innerHTML = 'Switch branch';
+                            }
+                            else{
+                                main_path.value= 'No main file found';
+                                button.disabled = true;
+                                button.innerHTML = 'Switch branch';
+                            }
+                        }
+                        else{
+                            for (var i = 0; i < a['tree'].length; ++i){
+                                if (isMainCWL(a['tree'][i]['path'])){
+                                    main_path.value = a['tree'][i]['path'];
+                                    button.disabled = false;
+                                    button.innerHTML = 'Switch branch';
+                                    break;
+                                }
+                                else{
+                                    button.disabled = true;
+                                button.innerHTML = 'Switch branch';
+                                }
+                            }
+                        }
+                        
+                    }
+
+
+                    
+                }
+            }
+            xhttp.send();
+        }
+
+    }
+        
+        
+
+        
+
+    disease.innerHTML = repo;
+    main_path.value = path;
+    load_branch()
+</script>
 </body>
 </html>
