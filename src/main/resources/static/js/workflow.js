@@ -436,3 +436,131 @@ require(['jquery', 'bootstrap.tooltip', 'bootstrap.dropdown'],
         // Alterative notation as only a single data-toggle attribute is allowed
         $('[data-tooltip="true"]').tooltip();
     });
+
+var urlelement = document.getElementById("thisurl");
+var disease = document.getElementById("name");
+var disease_selection = document.getElementById("url");
+var branch_selection = document.getElementById("branch");
+var url = urlelement.href;
+var array = url.split("/");
+var path = array[array.length-1];
+var main_path = document.getElementById('path');
+var branch = array[array.length-2];
+var repo = array[array.length-4];
+var button = document.getElementById("parse");
+
+var query = 'https://api.github.com/repos/phenoflow/' + repo + '/branches';
+
+disease_selection.value = url;
+function load_branch(){
+    var branches = [];
+    let xhttp = new XMLHttpRequest();
+    xhttp.open('GET', query, true);
+    xhttp.onreadystatechange = function() {
+        if (this.readyState == 4 && this.status == 200) {
+            var all = JSON.parse(this.response);
+            if (all.length > 1){
+                all.forEach(element => {
+                    branches.push(element['name']);
+                });
+            }
+            else {
+                branches.push(all[0]['name']);
+            }
+            for(var i=0;i<branches.length;++i){
+                var option = '';
+                if (branches[i] == branch){
+                    option = '<option value="'+ branches[i]+'" selected>'+branches[i]+'</option>';
+                }
+                else{
+                    option = '<option value="'+ branches[i]+'">'+branches[i]+'</option>';
+                }
+                branch_selection.innerHTML += option;
+            }
+            
+        }
+        select_path();
+    }
+    xhttp.send();
+}
+
+function startWithUpper(c){
+            if (c.charAt(0) == c.charAt(0).toUpperCase()){
+                return true;
+            }
+            return false;
+        }
+
+function isMainCWL(s){
+    if (startWithUpper(s) && s.endsWith('.cwl') && !s.includes('inputs')){
+        return true;
+    }
+    return false;
+}
+
+function select_path(){
+    if (branch_selection.value != ''){
+        main_path.innerHTML = '';
+        var quest = 'https://api.github.com/repos/phenoflow/' + repo + '/git/trees/' + branch_selection.value;
+        var file;
+        let xhttp = new XMLHttpRequest();
+        xhttp.open('GET', quest, true);
+        xhttp.onreadystatechange = function() {
+            if (this.readyState == 4 && this.status == 200) 
+            {
+                if (branch_selection.value == branch){
+                    button.disabled = true;
+                    button.innerHTML = 'Current branch';
+                }
+                else{
+                    var a = JSON.parse(this.response);
+                    // console.log(a['tree'])
+                    if (a['tree'].length < 1){
+                        main_path.value = 'Empty branch';
+                        button.disabled = true;
+                    }
+                    else if (a['tree'].length == 1){
+                        if (isMainCWL(a['tree'][0]['path'])){
+                            main_path.value = a['tree'][0]['path'];
+                            button.disabled = false;
+                            button.innerHTML = 'Switch branch';
+                        }
+                        else{
+                            main_path.value= 'No main file found';
+                            button.disabled = true;
+                            button.innerHTML = 'Switch branch';
+                        }
+                    }
+                    else{
+                        for (var i = 0; i < a['tree'].length; ++i){
+                            if (isMainCWL(a['tree'][i]['path'])){
+                                main_path.value = a['tree'][i]['path'];
+                                button.disabled = false;
+                                button.innerHTML = 'Switch branch';
+                                break;
+                            }
+                            else{
+                                button.disabled = true;
+                            button.innerHTML = 'Switch branch';
+                            }
+                        }
+                    }
+                    
+                }
+
+
+                
+            }
+        }
+        xhttp.send();
+    }
+
+}
+    
+    
+
+    
+
+disease.innerHTML = repo;
+main_path.value = path;
+load_branch()
