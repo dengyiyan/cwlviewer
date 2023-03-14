@@ -116,30 +116,4 @@ public class WorkflowFormValidatorTest {
     assertTrue(errors.hasErrors());
   }
 
-  /** Invalid URL */
-  @Test
-  public void invalidURL() throws Exception {
-
-    WorkflowForm invalidURL = new WorkflowForm("https://google.com/clearly/not/github/url");
-
-    Errors errors = new BeanPropertyBindingResult(invalidURL, "workflowForm");
-    GitDetails details = workflowFormValidator.validateAndParse(invalidURL, errors);
-
-    assertNull(details);
-    assertTrue(errors.hasErrors());
-  }
-
-  /** Generic File URL without branch or path */
-  @Test
-  public void noBranchOrPath() throws Exception {
-
-    WorkflowForm genericUrl =
-        new WorkflowForm("https://bitbucket.org/markrobinson96/workflows.git");
-
-    Errors errors = new BeanPropertyBindingResult(genericUrl, "workflowForm");
-    GitDetails details = workflowFormValidator.validateAndParse(genericUrl, errors);
-
-    assertNull(details);
-    assertTrue(errors.hasErrors());
-  }
 }

@@ -28,17 +28,6 @@ requirejs.config({
 });
 
 /**
- * Suggestions on the main page
- */
-require(['jquery'],
-    function ($) {
-        $(".example").click(function(e) {
-            $("#url").val($(this).attr("href")).trigger("change");
-            e.preventDefault();
-        });
-    });
-
-/**
  * Validation for form
  */
 require(['jquery'],
@@ -63,13 +52,10 @@ require(['jquery'],
         /**
          * Clear warnings when fields change
          */
-        $("input").keyup(function(e) {
-            // Fix for enter key being detected as a change
-            if (e.keyCode != 13) {
-                var field = $(this);
-                field.parent().removeClass("has-error");
-                field.next().text("");
-            }
+        $("select").on('change',function(e) {
+            var field = $(this);
+            field.parent().removeClass("has-error");
+            field.next().text("");
         });
 
         /**
@@ -77,26 +63,11 @@ require(['jquery'],
          */
         $('#add').submit(function() {
             var input = $("#url").val();
-            if (gitPattern.test(input)) {
-                var success = false;
-                if (input.startsWith("ssh") || input.startsWith("git@")) {
-                    addWarning("url", "SSH is not supported as a protocol, please provide a HTTPS URL to clone");
-                } else {
-                    success = true;
-                    if (!$("#branch").val()) {
-                        addWarning("branch", "You must provide a branch name for the workflow");
-                        success = false;
-                    }
-                    if (!$("#path").val()) {
-                        addWarning("path", "You must provide a path to the workflow or a directory of workflows");
-                        success = false;
-                    }
-                }
-                return success;
-            } else if (!githubPattern.test(input) && !gitlabPattern.test(input)) {
-                addWarning("url", "Must be a URL to a workflow or directory of workflows on gitlab.com or github.com, or a Git repository URL");
+            if (input == "") {
+                addWarning("url", "Must select a phenotype to proceed");
                 return false;
             }
+            return true;
         });
 
         /**
@@ -157,7 +128,7 @@ function loadUrls(){
 
 function loadBranch(){
     if (url_selection.value == ''){
-        
+        button.disabled = false;
     }
     else{
         var branches = [];
@@ -240,6 +211,9 @@ function selectPath(){
         }
         xhttp.send();
 
+    }
+    else{
+        button.disabled = false;
     }
     
     

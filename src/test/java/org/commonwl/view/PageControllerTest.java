@@ -60,7 +60,7 @@ public class PageControllerTest {
   @Test
   public void homePageWithURL() throws Exception {
     mockMvc
-        .perform(get("/").param("url", "https://github.com/test/default/link"))
+        .perform(get("/").param("url", "https://github.com/phenoflow/Imported-codelist---7c131930-2d0b-11ed-8796-bf0bd96b6ffa/read-potential-cases-omop/Importrd--codelist.cwl"))
         .andExpect(status().isOk())
         .andExpect(view().name("index"))
         .andExpect(model().attributeExists("workflowForm"))
@@ -68,7 +68,7 @@ public class PageControllerTest {
             model()
                 .attribute(
                     "workflowForm",
-                    hasProperty("url", is("https://github.com/test/default/link"))));
+                    hasProperty("url", is("https://github.com/phenoflow/Imported-codelist---7c131930-2d0b-11ed-8796-bf0bd96b6ffa/read-potential-cases-omop/Importrd--codelist.cwl"))));
   }
 
   /** About page */
