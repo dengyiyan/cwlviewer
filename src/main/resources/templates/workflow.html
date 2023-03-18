@@ -125,21 +125,11 @@ digraph G {
     <div class="row">
         <div class="col-md-12" >
             <h2>Disease: <span id="name"></span></h2>
-            <!-- <div class="graph-menu hidden-print pull-right" id="graph-menu">
-                <label>Switch branch</label>
-                <form id="add" action="#" th:action="@{/workflows}" th:object="${workflowForm}" method="POST">
-                    <select class="form-select form-control" name="branch" id="branch" aria-label="Default select example" onchange="select_path()">
-                    </select>
-                    <label class="control-label" for="path">Main cwl file</label>
-                    <input type="text" class="form-control" name="path" id="path" readonly/>
-                    <button class="btn btn-primary pull-right" type="submit" id="parse">Switch</button>
-                </form>
-            </div> -->
             <div style = 'border:1px solid black; border-radius: 15px;padding: 5px;padding-bottom: 50px;'>
                 <h4>Switch to another branch</h4>
                 <form id="add" action="#" th:action="@{/workflows}" th:object="${workflowForm}" method="POST">
                     <div hidden class="form-group">
-                        <input readonly class="form-select form-control" id="url" name="url">
+                        <input readonly class="form-control" id="url" name="url">
                         </input>
                     </div>
                     <div class="row">
@@ -153,7 +143,11 @@ digraph G {
                             <input type="text" class="form-control" name="path" id="path" readonly/>
                         </div>
                     </div>
-                    <button class="btn btn-primary pull-right" type="submit" id="parse">Switch</button>
+                    <div class="graph-menu hidden-print pull-right" id="graph-menu">
+                        <button class="btn btn-primary" type="submit" id="parse">Switch</button>
+                        <button type="button" id="reset" class="btn btn-primary" onclick="reset1()" disabled>Reset</button>
+                    </div>
+                    
                 </form>
             </div>
         </div>

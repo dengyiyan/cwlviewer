@@ -437,17 +437,18 @@ require(['jquery', 'bootstrap.tooltip', 'bootstrap.dropdown'],
         $('[data-tooltip="true"]').tooltip();
     });
 
-var urlelement = document.getElementById("thisurl");
 var disease = document.getElementById("name");
 var disease_selection = document.getElementById("url");
 var branch_selection = document.getElementById("branch");
-var url = urlelement.href;
+var url = document.getElementById("thisurl").href;
 var array = url.split("/");
 var path = array[array.length-1];
 var main_path = document.getElementById('path');
 var branch = array[array.length-2];
 var repo = array[array.length-4];
 var button = document.getElementById("parse");
+var reset = document.getElementById("reset");
+
 
 var query = 'https://api.github.com/repos/phenoflow/' + repo + '/branches';
 
@@ -502,7 +503,6 @@ function select_path(){
     if (branch_selection.value != ''){
         main_path.innerHTML = '';
         var quest = 'https://api.github.com/repos/phenoflow/' + repo + '/git/trees/' + branch_selection.value;
-        var file;
         let xhttp = new XMLHttpRequest();
         xhttp.open('GET', quest, true);
         xhttp.onreadystatechange = function() {
@@ -511,56 +511,41 @@ function select_path(){
                 if (branch_selection.value == branch){
                     button.disabled = true;
                     button.innerHTML = 'Current branch';
+                    main_path.value = path;
+                    reset.disabled = true;
                 }
                 else{
+                    reset.disabled = false;
+                    button.innerHTML = 'Switch branch';
                     var a = JSON.parse(this.response);
-                    // console.log(a['tree'])
                     if (a['tree'].length < 1){
                         main_path.value = 'Empty branch';
                         button.disabled = true;
                     }
-                    else if (a['tree'].length == 1){
-                        if (isMainCWL(a['tree'][0]['path'])){
-                            main_path.value = a['tree'][0]['path'];
-                            button.disabled = false;
-                            button.innerHTML = 'Switch branch';
-                        }
-                        else{
-                            main_path.value= 'No main file found';
-                            button.disabled = true;
-                            button.innerHTML = 'Switch branch';
-                        }
-                    }
                     else{
+                        button.disabled = true;
+                        main_path.value= 'No main file found';
                         for (var i = 0; i < a['tree'].length; ++i){
                             if (isMainCWL(a['tree'][i]['path'])){
                                 main_path.value = a['tree'][i]['path'];
                                 button.disabled = false;
-                                button.innerHTML = 'Switch branch';
                                 break;
-                            }
-                            else{
-                                button.disabled = true;
-                            button.innerHTML = 'Switch branch';
                             }
                         }
                     }
                     
                 }
-
-
-                
             }
         }
         xhttp.send();
     }
-
 }
-    
-    
 
-    
+function reset1(){
+    branch_selection.value = branch; 
+    select_path();
+    // reset.disabled = true;
+}
 
 disease.innerHTML = repo;
-main_path.value = path;
-load_branch()
+load_branch();

@@ -32,9 +32,6 @@ requirejs.config({
  */
 require(['jquery'],
     function ($) {
-        var generalPattern = "\\/([A-Za-z0-9_.-]+)\\/([A-Za-z0-9_.-]+)\\/?(?:(?:tree|blob)\\/([^/]+)\\/?(.*)?)?$";
-        var githubPattern = new RegExp("^https?:\\/\\/github\\.com" + generalPattern);
-        var gitlabPattern = new RegExp("^https?:\\/\\/gitlab\\.com" + generalPattern);
         var gitPattern = new RegExp("^((git|ssh|http(s)?)|(git@[\\w\\.]+))(:(//)?)([\\w\\.@\\:/\\-~]+)(\\.git)(/)?$");
 
         /**
