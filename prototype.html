@@ -1,0 +1,675 @@
+<!-- This work is produced soly by Dengyi Yan
+29/03/2023
+ -->
+
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title> prototype </title>
+    <meta charset="utf-8">
+</head>
+<body>
+    <div id="1">
+
+    </div>
+    <script>
+        // const branch = 'read-potential-cases-disc';
+        const targetOwner = 'dengyiyan'
+        const targetRepo = 'Long-covid---aedea650-7a21-11ed-b9d2-e51f21933d80';
+        const repoQueryURL = 'https://api.github.com/repos/' + targetOwner + '/' + targetRepo + '/git/trees/read-potential-cases-disc';
+        const subModuleQueryHeader = 'https://api.github.com/repos/'+ targetOwner + '/' + targetRepo + '/contents/';
+        const readmeQueryHeader = 'https://api.github.com/repos/';
+
+
+        const withouts = [", without "];
+        const includes = [" following "];
+        const common = [" and "];
+        // const keyweords = new Set(withouts + includes + [" and "]);
+        // 'https://api.github.com/repos/dengyiyan/Long-covid---aedea650-7a21-11ed-b9d2-e51f21933d80/contents/README.md'
+        // 'https://raw.githubusercontent.com/dengyiyan/Long-covid---aedea650-7a21-11ed-b9d2-e51f21933d80/read-potential-cases-disc/README.md'
+        // 'https://api.github.com/repos/dengyiyan/Long-covid---aedea650-7a21-11ed-b9d2-e51f21933d80/readme/Long-covid---a7602980-7a21-11ed-b9d2-e51f21933d80';
+        var subs = [];
+        var phenotype;
+
+        function TreeNode(val, left, right) {
+            this.val = (val===undefined ? 0 : val)
+            this.left = (left===undefined ? null : left)
+            this.right = (right===undefined ? null : right)
+        }
+
+        function loadInfo(){
+            let xhttp = new XMLHttpRequest();
+            xhttp.open('GET', repoQueryURL, true);
+            xhttp.onreadystatechange = function() {
+                if (this.readyState == 4 && this.status == 200) {
+                    var a = JSON.parse(this.response);
+                    var tree = a['tree'];
+
+                    subs = getSubModule(tree);
+                    // console.log(tree);
+                    // console.log(subs);
+
+                    // getPhenotype(tree);
+
+                    getSubURLs().then((subURLs) => {
+                        // console.log(subURLs)
+                        getReadme(subURLs).then((readmes) => {
+                            console.log(readmes);
+                            var splits = splitAll(splitInHalf(readmes));
+                            console.log(splits);
+                            var paths = generatePaths(splits);
+                            console.log(paths);
+                            operate(paths);
+                        });
+                    });
+                }
+            }
+            
+            xhttp.send();
+        }
+
+
+        function getSubModule(a){
+            var res = [];
+            a.forEach(element => {
+                if (element['type']=='commit'){
+                    res.push(element['path']);
+                }
+            });
+            return res;
+        }
+
+        // function getPhenotype(a){
+        //     var res;
+        //     a.forEach(element => {
+        //         if (element['path']=='README.md'){
+        //             res = element['path'];
+        //         }
+        //     });
+        // }
+
+        // function getSubURLs(subs){
+        //     var R = new XMLHttpRequest();
+        //     var newQuery = subModuleQueryHeader + subs[count];
+        //     R.open('GET', newQuery, true);
+        //     R.onreadystatechange = function() {
+        //         if (this.readyState == 4 && this.status == 200) {
+        //             var a = JSON.parse(this.response);
+        //             console.log(a['submodule_git_url'])
+        //             subURLs.push(a['submodule_git_url']);
+        //             ++count;
+        //             if (count < subs.length) {
+        //                 getSubURLs(subs);
+        //             }
+        //         }
+        //     }
+        //     R.send();
+
+        // }
+
+
+        // function getSubURL(a){
+        //     var newQuery = subModuleQueryHeader + a;
+        //     let xhttp = new XMLHttpRequest();
+        //     xhttp.open('GET', newQuery, false);
+        //     xhttp.onreadystatechange = function() {
+        //         if (this.readyState == 4 && this.status == 200) {
+        //             var a = JSON.parse(this.response);
+        //             console.log(a['submodule_git_url'])
+        //             subURLs.push(a['submodule_git_url']);
+        //         }
+
+        //     }
+
+        //     xhttp.send();
+        // }
+
+        // function getSubURLs(){
+
+        //     var f = (function(){
+        //         var xhr = [], i;
+        //         for(i = 0; i < subs.length; i++){ //for loop
+        //             (function(i){
+        //                 xhr[i] = new XMLHttpRequest();
+        //                 url = subModuleQueryHeader + subs[count];
+        //                 xhr[i].open("GET", url, true);
+        //                 xhr[i].onreadystatechange = function(){
+        //                     if (xhr[i].readyState === 4 && xhr[i].status === 200){
+        //                         console.log('Response from request ' + i + ' [ ' + xhr[i].responseText + ']'); 
+        //                     }
+        //                 };
+        //                 xhr[i].send();
+        //             })(i);
+        //         }
+        //     })();
+
+        // };
+        function getSubURLs() {
+            return new Promise((resolve) => {
+                var requests = [];
+                subs.forEach((sub) => {
+                    var url = subModuleQueryHeader + sub;
+                    var xhr = new XMLHttpRequest();
+                    xhr.open("GET", url);
+                    xhr.send();
+                    requests.push(
+                        new Promise((resolve) => {
+                            xhr.onload = () => {
+                                if (xhr.status === 200) {
+                                    var response = JSON.parse(xhr.responseText);
+                                    resolve(response.submodule_git_url);
+                                } else {
+                                    resolve(null);
+                                }
+                            };
+                        })
+                    );
+                });
+
+                Promise.all(requests).then((results) => {
+                    var subURLs = results.filter((url) => url !== null);
+                    resolve(subURLs);
+                });
+            });
+        };
+
+        function getReadme(subURLs){
+            return new Promise((resolve) => {
+                var requests = [];
+                var array = subURLs[0].split("/");
+                var org = array[array.length-2];
+                // console.log(array);
+                // console.log(org);
+                var count = 0;
+                subURLs.forEach((subURL) => {
+                    var repo = subs[count];
+                    ++count;
+                    var url = readmeQueryHeader + org + "/" + repo + "/readme";
+                    var xhr = new XMLHttpRequest();
+                    xhr.open("GET", url);
+                    xhr.send();
+                    requests.push(
+                        new Promise((resolve) => {
+                            xhr.onload = () => {
+                                if (xhr.status === 200) {
+                                    var response = JSON.parse(xhr.responseText);
+                                    // console.log(response);
+                                    resolve(readmeExtract(response.content));
+                                } else {
+                                    resolve(null);
+                                }
+                            };
+                        })
+                    );
+                });
+
+                Promise.all(requests).then((results) => {
+                    var readmes = results.filter((url) => url !== null);
+                    resolve(readmes);
+                });
+            });
+        };
+
+        function readmeExtract(txt){
+            var temp = atob(txt).split("\n").filter(x=>x!="");
+            // console.log(temp);
+            var description = temp[1].split(" - ")[0];
+            return description;
+        }
+
+        function splitBy(txt, keys){
+            txt = txt.trim().toLowerCase();
+            for (var key of keys){
+                txt = txt.replaceAll(key,"$");
+            }
+            txt = txt.trim().replaceAll("a record of", "");
+            return txt.split("$");
+        }
+
+
+        function splitInHalf(readmes){
+            var res = [];
+            readmes.forEach(element => {
+                var array = splitBy(element,withouts);
+                var temp = {};
+                temp.include = array[0];
+                if (array.length>1){
+                    temp.without = array[1];
+                }
+                else{
+                    temp.without = null;
+                }
+                res.push(temp);
+                
+            });
+            return res;
+        }
+
+        function splitAll(maps){
+            var keys0 = includes.concat(common);
+            // console.log(keys0)
+            var keys1 = withouts.concat(common);
+            var res = [];
+
+            for (var map of maps){
+                // console.log(map.include)
+                if (map.include != null){
+                    map.include = splitBy(map.include,keys0);
+                }
+                if (map.without != null){
+                    map.without = splitBy(map.without,keys1);
+                }
+                res.push(map);
+            }
+            return res;
+        }
+
+        function generatePaths(a){
+            var res = [];
+            a.forEach(element => {
+                res.push(generatePath(element));
+            });
+            return res;
+        }
+
+        function generatePath(a){
+            //generate a path only if the path is a determined one
+            var res = '$yes';
+            if (a.without == null){
+                res = a.include.reverse().join("$yes$") + res;
+                return res.split("$");
+            }
+            else if (a.include.length == 1){
+                res = a.without.reverse().join("$no$") + "$no$" + a.include[0] + res;
+                return res.split("$");
+            }
+            return a;
+        }
+
+        // var roots = [];
+        // function iterate(paths){
+        //     var trees = [];
+        //     var weak = paths.filter(x=>x.include != null);
+        //     var determined = paths.filter(x=>x.include == null);
+        //     var root = findRoot(determined);
+        //     console.log(root)
+
+        //     while (root != false){
+        //         var new_paths;
+        //         var t = {};
+        //         t.no = [];
+        //         t.yes = [];
+            
+        //         t.val = root;
+
+        //         var new_determined = [];
+        //         determined.forEach(element => {
+        //             new_determined.push(removeRoot(element, root));
+        //         });
+        //         console.log("1")
+        //         console.log(new_determined);
+        //         trees.push(t);
+        //         console.log(trees);
+                
+        //         var p = [];
+        //         weak.forEach(path => {
+        //             var a = {};
+        //             a.include = path.include.filter(x=>x!=root);
+        //             a.without = path.without.filter(x=>x!=root);
+        //             p.push(a);
+        //         });
+        //         // console.log(p);
+        //         new_paths = (generatePaths(p)).concat(new_determined);
+        //         weak = new_paths.filter(x=>x.include != null);
+        //         determined = new_paths.filter(x=>x.include == null);
+        //         console.log(new_paths);
+
+        //         root = findRoot(determined);
+        //         console.log(root)
+        //     }
+            
+        //     function removeRoot(arr, value) {
+        //         var index = arr.indexOf(value);
+        //         var val = arr[0];
+        //         var indicator = arr[1];
+        //         var new_array;
+        //         if (val == value) {
+        //             new_array = getRemaining(arr);
+        //             if (indicator == "no"){
+        //                 t.no.push(new_array);
+        //             }
+        //             if (indicator == "yes"){
+        //                 t.yes.push(new_array);
+        //             }
+        //         }
+        //         else{
+        //             new_array = arr;
+        //         }
+        //         return new_array;
+        //     }
+        // }
+
+        function operate(paths){
+            var root = findRoot(paths);
+            var res = getTree(paths, root);
+            // console.log(res)
+            var remainingPaths = res.paths;
+            var workflow = res.tree;
+
+            console.log(recursion(workflow, remainingPaths));
+        }
+
+        function classify(array, paths){
+            var new_paths = array.concat(paths);
+            var res = getTree(new_paths, array[0][0])
+            // console.log(res)
+            return res;
+        }
+
+        // function recursion(tree, paths){
+        //     if (tree.no.length == 0 && tree.yes.length == 0){
+        //         return {"no": [], "val": tree.val, "yes": []};
+        //     }
+        //     var nop = tree.no.concat(paths);
+        //     var yesp = tree.yes.concat(paths);
+        //     console.log(nop)
+        //     console.log(tree);
+        //     var noTree = getTree()
+        //     // recursion({"val": tree.val, "no": getTree(paths, tree.no[0][0]).tree, "yes": getTree(paths, tree.yes[0][0]).tree}, paths)
+
+        // }
+        // function operate(paths){
+        //     var root = findRoot(paths);
+        //     var res = getTree(paths, root);
+        //     var remainingPaths = res.paths;
+        //     var workflow = res.tree;
+        //     console.log(buildTree(workflow))
+        //     recursion(workflow, remainingPaths);
+        // }
+
+        function recursion(tree, paths){
+            var nop = tree.no.concat(paths);
+            var noroot = newFindRoot(tree.no, paths);
+            var yesp = tree.yes.concat(paths);
+            var yesroot = newFindRoot(tree.yes, paths);
+            if (tree.no[0].length == 0 && tree.yes[0].length == 0){
+                return {"no": "no case", "val": tree.val, "yes": "case"};
+            }
+            
+            var noTree;
+            if (tree.no.length == 1 && tree.no[0].length == 2) {
+                noTree = newGetTree(tree.no, paths, noroot)
+            }
+            else {
+                noTree = getTree(nop, noroot);
+            } 
+
+            var yesTree; 
+            if (tree.yes.length == 1 && tree.yes[0].length == 2) {
+                yesTree = newGetTree(tree.yes, paths, yesroot)
+            }
+            else {
+                yesTree = getTree(yesp, yesroot);
+            }
+
+            if (tree.no[0].length != 0 && tree.yes[0].length == 0 && noroot){
+                return {"no": recursion(noTree.tree, noTree.paths), "val": tree.val, "yes": "case"};
+            }
+            else if (tree.no[0].length == 0 && tree.yes[0].length != 0 && yesroot){
+                return {"no": "no case", "val": tree.val, "yes": recursion(yesTree.tree, yesTree.paths)};
+            }
+            return {"no": recursion(noTree.tree, noTree.paths), "val": tree.val, "yes": recursion(yesTree.tree, yesTree.paths)}
+            
+        }
+
+
+        // function buildTree(treeObj) {
+        //     var tree = {};
+        //     tree.val = treeObj.val;
+        //     tree.no = [];
+        //     tree.yes = [];
+
+        //     for (var i = 0; i < treeObj.no.length; i++) {
+        //         var child = treeObj.no[i];
+        //         if (Array.isArray(child)) {
+        //             var subtree = buildTree({"val": child[0], "no": child.slice(1), "yes": []});
+        //             tree.no.push(subtree);
+        //         }
+        //     }
+
+        //     for (var i = 0; i < treeObj.yes.length; i++) {
+        //         var child = treeObj.yes[i];
+        //         if (Array.isArray(child)) {
+        //             var subtree = buildTree({"val": child[0], "no": [], "yes": child.slice(1)});
+        //             tree.yes.push(subtree);
+        //         }
+        //     }
+
+        //     return tree;
+        // }
+
+        function getTree(paths, root){
+            var trees = {};
+            trees.val = root;
+            trees.no = [];
+            trees.yes = [];
+            var remainingPaths = [];
+            {
+                var determined = paths.filter(x=>x.include == null);
+                var weak = paths.filter(x=>x.include != null);
+                for (var i = 0; i < determined.length; ++i){
+                    if (determined[i][0] == root){
+                        var new_array = getRemaining(determined[i]);
+                        if (new_array.length > 0){
+                            if (determined[i][1] == "yes"){
+                                trees.yes.push(new_array);
+                            }
+                            else if (determined[i][1] == "no"){
+                                trees.no.push(new_array);
+                            }
+                            determined[i] = new_array;
+                        }
+                    }
+                    else{
+                        remainingPaths.push(determined[i]);
+                    }
+                }
+                
+                weak.forEach(path => {
+                    var a = {};
+                    a.include = path.include.filter(x=>x!=root);
+                    a.without = path.without.filter(x=>x!=root);
+                    var res = generatePath(a);
+                    if (path.include.includes(root)){
+                        trees.yes.push(res);
+                    }
+                    else if (path.without.includes(root)){
+                        trees.no.push(res);
+                    }
+                    else{
+                        remainingPaths.push(res);
+                    }
+                });
+
+                if (trees.no.length == 0){
+                    trees.no = [[]];
+                }
+                if (trees.yes.length == 0){
+                    trees.yes = [[]];
+                }
+                
+                // console.log(trees)
+                // console.log(remainingPaths)
+                return {"tree": trees, "paths": remainingPaths}
+            }
+            
+        }
+
+        function newGetTree(branch, paths, root){
+            var trees = {};
+            trees.val = root;
+            trees.no = [[]];
+            trees.yes = [[]];
+            var remainingPaths = [];
+            if (branch.length == 1 && branch[0].length == 2){
+                for (var i = 0; i < paths.length; ++i){
+                    if (paths[i] == branch[0]){}
+                    else {
+                        remainingPaths.push(paths[i]);
+                    }
+                }
+            }
+            return {"tree": trees, "paths": remainingPaths}
+        }
+
+        
+
+        function getRemaining(arr){
+            var res = [];
+            for (var i = 2; i < arr.length; ++i){
+                res.push(arr[i]);
+            }
+            return res;
+        }
+
+        function findRoot(paths){
+            var determined = paths.filter(x=>x.include == null);
+            for (var i = 0; i < determined.length; ++i){
+                for (var j = i; j < determined.length; ++j){
+                    if (determined[i][0] == determined[j][0] && determined[i][1] != determined[j][1]){
+                        root = determined[i][0];
+                        return root;
+                    }
+                }
+            }
+            return false;
+        }
+
+        function newFindRoot(branch, paths){
+            if (paths.length == 0){
+                return branch[0][0];
+            }
+            else if (branch.length == 1 && branch[0].length == 2){
+                return branch[0][0];
+            }
+            return findRoot(branch.concat(paths));
+        }
+
+
+        // function storeInTrees(a){
+        //     var res = [];
+        //     a.forEach(element => {
+        //         res.push(storeInTree(element));
+        //     });
+        //     return res;
+        // }
+
+        // function storeInTree(a){
+        //     //store the selectors in a tree structure.
+        //     var res = new TreeNode(a.include[0], "case", "no case");
+        //     if (a.without == null){
+        //         for (var i = 1; i < a.include.length; ++i){
+        //             var subroot = a.include[i];
+        //             var temp = new TreeNode(subroot, res, null)
+        //             res = temp;
+        //         }
+        //         return res;
+        //     }
+        //     else if (a.include.length == 1){
+        //         for (var i = 0; i < a.without.length; ++i){
+        //             var subroot = a.without[i];
+        //             var temp = new TreeNode(subroot, null, res)
+        //             res = temp;
+        //         }
+        //         return res;
+        //     }
+        //     return a;
+        // }
+
+        // function getAllVals(root){
+        //     var res = [root.val];
+        //     if (root.left && root.left != "case" && root.left != "no case"){
+        //         res = res.concat(getAllVals(root.left));
+        //     }
+        //     if (root.right && root.right != "case" && root.right != "no case"){
+        //         res = res.concat(getAllVals(root.right));
+        //     }
+        //     return res;
+        // }
+
+        // function getAllTreeVals(a){
+        //     var res = [];
+        //     a.forEach(element => {
+        //         if (element.val){
+        //             res.push(getAllVals(element));
+        //         }
+        //         else {
+        //             res.push(element);
+        //         }
+        //     });
+        //     return res;
+        // }
+
+        // function getSubTree(a, val){
+        //     if (a.val == val){
+        //         return a;
+        //     }
+        //     if (a.left){
+        //         return getSubTree(a.left, val);
+        //     }
+        //     if (a.right){
+        //         return getSubTree(a.right, val);
+        //     }
+        // }
+
+        // function getSubTreePath(a, val){
+        //     var res = [];
+        //     if (a.val == val){
+        //         return res;
+        //     }
+        //     if (a.left){
+        //         res.push('left');
+        //     }
+        //     if (a.right){
+        //         res.push('right');
+        //     }
+        //     return res;
+        // }
+
+        // function replaceSubTree(a, val, b){
+
+        // }
+
+        // function mergeTrees(trees){
+        //     var a = trees.filter(x=>x.val != null);
+        //     var res = a[0];
+        //     for (var i = 1; i < a.length; ++i){
+        //         if (res.val == a[i].val){
+        //             if (res)
+        //         }
+        //     }
+        //     // var avals = getAllVals(a);
+        //     // var bvals = getAllVals(b);
+        //     // var intersection = null;
+        //     // for (var i = 0; i < avals.length; ++i){
+        //     //     if (bvals.includes(avals[i])){
+        //     //         intersection = avals[i];
+        //     //         break;
+        //     //     }
+        //     // }
+        //     // var asub = getSubTree(a, intersection);
+
+            
+        // }
+
+        // function merge(a, b, inter){
+        //     var res = a;
+
+        // }
+
+        loadInfo();
+
+    </script>
+</body>
+</html>
