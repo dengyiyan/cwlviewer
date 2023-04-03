@@ -83,8 +83,9 @@ require(['jquery'],
 
 
 
-const searchQueryRepos = 'https://api.github.com/orgs/phenoflow/repos';
-const searchQueryHeader = 'https://api.github.com/repos/phenoflow/';
+const org = 'cwlviewer-test';
+const searchQueryRepos = 'https://api.github.com/orgs/' + org + '/repos';
+const searchQueryHeader = 'https://api.github.com/repos/' + org + '/';
 
 var m = new Map();
 var defaults = new Map();

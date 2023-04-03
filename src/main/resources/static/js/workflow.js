@@ -252,6 +252,8 @@ require(['jquery', 'bootstrap.modal', 'svg-pan-zoom', 'hammerjs', 'jquery.svg'],
         function goToSubworkflow(node) {
             var matchingTableRow = getTableRow(node);
             var subworkflowLink = $(matchingTableRow).find("a.subworkflow");
+            console.log(1);
+            console.log(subworkflowLink);
             if (subworkflowLink.length > 0) {
                 location.href = subworkflowLink.attr("href");
             }
@@ -437,20 +439,34 @@ require(['jquery', 'bootstrap.tooltip', 'bootstrap.dropdown'],
         $('[data-tooltip="true"]').tooltip();
     });
 
+const org = 'cwlviewer-test';
+
 var disease = document.getElementById("name");
 var disease_selection = document.getElementById("url");
 var branch_selection = document.getElementById("branch");
 var url = document.getElementById("thisurl").href;
-var array = url.split("/");
-var path = array[array.length-1];
 var main_path = document.getElementById('path');
-var branch = array[array.length-2];
-var repo = array[array.length-4];
 var button = document.getElementById("parse");
 var reset = document.getElementById("reset");
+var array = url.split("/");
+var path = array[array.length-1];
+var branch;
+var repo;
 
+function getElements(array){
+    if (array[array.length - 3] == 'blob'){
+        branch = array[array.length-2];
+        repo = array[array.length-4];
+    }
+    else{
+        branch = 'main';
+        repo = array[array.length-2];
+    }
+}
 
-var query = 'https://api.github.com/repos/phenoflow/' + repo + '/branches';
+getElements(array);
+
+var query = 'https://api.github.com/repos/' + org + '/' + repo + '/branches';
 
 disease_selection.value = url;
 function load_branch(){
@@ -502,7 +518,7 @@ function isMainCWL(s){
 function select_path(){
     if (branch_selection.value != ''){
         main_path.innerHTML = '';
-        var quest = 'https://api.github.com/repos/phenoflow/' + repo + '/git/trees/' + branch_selection.value;
+        var quest = 'https://api.github.com/repos/' + org + '/' + repo + '/git/trees/' + branch_selection.value;
         let xhttp = new XMLHttpRequest();
         xhttp.open('GET', quest, true);
         xhttp.onreadystatechange = function() {
